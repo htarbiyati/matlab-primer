@@ -1,0 +1,11 @@
+x = 25.783;
+whos x
+%%
+isfloat(x)
+%%
+y = int64(-589324077574);          % Create a 64-bit integer
+x = double(y)                      % Convert to double
+%%
+%Because MATLAB stores numeric data as a double by default, you need to use the single conversion function to create a single-precision number:
+
+x = single(25.783);
