@@ -1,3 +1,10 @@
+% IEEE 754
+% The IEEE Standard for Floating-Point Arithmetic (IEEE 754) is a technical standard for 
+% floating-point arithmetic established in 1985 by the Institute of Electrical and Electronics Engineers 
+% (IEEE). The standard addressed many problems found in the diverse floating-point implementations that 
+% made them difficult to use reliably and portably. Many hardware floating-point units use the 
+% IEEE 754 standard. 
+%
 x = 25.783;
 whos x
 %%
