@@ -8,6 +8,7 @@
 clear
 
 numElements = 500;
+
 for i=1:numElements
     for j=1:numElements
         
