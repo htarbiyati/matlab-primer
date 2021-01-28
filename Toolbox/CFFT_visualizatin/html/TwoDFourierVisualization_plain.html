@@ -1,0 +1,307 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>2D Line Art Fourier Transform Animation</title><meta name="generator" content="MATLAB 9.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-07-20"><meta name="DC.source" content="TwoDFourierVisualization_plain.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>2D Line Art Fourier Transform Animation</h1><!--introduction--><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Loading 2D Line Data</a></li><li><a href="#4">CFFT</a></li><li><a href="#7">Inverse Fourier Transform and Calculation of Reproduced Coordinate Points</a></li><li><a href="#10">Draw reproduced coordinate points</a></li><li><a href="#11">Vector display of each coefficient component</a></li><li><a href="#12">Video display of each coefficient component</a></li></ul></div><h2 id="1">Loading 2D Line Data</h2><pre class="codeinput">clear; close <span class="string">all</span>
+s = load(<span class="string">'R_zeta.mat'</span>);
+<span class="comment">% The coordinates of the curve you want to draw must be saved in .mat beforehand.</span>
+</pre><p>The x coordinate is converted into a complex number with the real part and the y coordinate as the imaginary part.</p><pre class="codeinput">position = complex(s.R(:,1),s.R(:,2));
+Ndata = length(position); <span class="comment">% Number of Data Point</span>
+</pre><p>Number of Fourier Series</p><pre class="codeinput">Ncoef = 500;
+</pre><h2 id="4">CFFT</h2><pre class="codeinput">tmp_coef = fft(position);
+</pre><p>FFTW(<a href="http://www.fftw.org/fftw3_doc/The-1d-Discrete-Fourier-Transform-_0028DFT_0029.html#The-1d-Discrete-Fourier-Transform-_0028DFT_0029">Link</a>)</p><p>"From above, an FFTW_FORWARD transform corresponds to a sign of -1 in the exponent of the DFT. Note also that we use the standard "in-order&#8221; output ordering?the k-th output corresponds to the frequency k/n (or k/T, where T is your total sampling period). For those who like to think in terms of positive and negative frequencies, this means that the positive frequencies are stored in the first half of the output and the negative frequencies are stored in backwards order in the second half of the output. (The frequency -k/n is the same as the frequency (n-k)/n.)"</p><p>Number of coefficient is Ncoef: Use Ncoef/2 pairs in order of decreasing frequency (Even Ncoef)</p><p><tt>1,2,3,...,Ncoef/2</tt></p><p><tt>Ndata, Ndata-1, Ndata-2,..., Ndata-Ncoef/2+1</tt></p><p>First, create a vector k _ idx that represents the position of the corresponding element in order of decreasing frequency.</p><pre class="codeinput">idx1 = 1:Ncoef/2;
+idx2 = Ndata:-1:Ndata-Ncoef/2+1;
+tmp_idx = [idx1;idx2];
+</pre><p>Rearrange</p><p><tt>1, Ndata, 2, Ndata-1, 3, Ndata-3, ..., Ncoef/2, Ndata-Ncoef/2+1</tt></p><p>Only the coefficients used are assigned to Fcoef.</p><pre class="codeinput">k_idx = tmp_idx(:)';
+Fcoef = tmp_coef(k_idx);
+</pre><h2 id="7">Inverse Fourier Transform and Calculation of Reproduced Coordinate Points</h2><div><ul><li><tt>pos_Nocef</tt>: Coordinate points reproduced by N_coef coefficients (Complex number | Ndata x1 |)</li><li><tt>pos_NcoefMatrix</tt>: The effects of each factor are decomposed and stored (Complex | Ndata x Ncoef |)</li></ul></div><pre class="codeinput">pos_Ncoef = zeros(Ndata,1);
+pos_NcoefMatrix = zeros(Ndata,Ncoef);
+
+<span class="keyword">for</span> jj=1:Ndata
+    pos_Ncoef(jj) = (exp(1i*2*pi*(k_idx-1)*(jj-1)/Ndata)*Fcoef)/Ndata;
+    pos_NcoefMatrix(jj,:) = (exp(1i*2*pi*(k_idx-1)*(jj-1)/Ndata).*Fcoef.')/Ndata;
+<span class="keyword">end</span>
+<span class="comment">% pos_Ncoef = sum(pos_NcoefMatrix,2); % pos_Ncoef is same as this equation.</span>
+</pre><h2 id="10">Draw reproduced coordinate points</h2><pre class="codeinput">figure(1)
+plot(real(position),imag(position),<span class="string">'r'</span>);
+hold <span class="string">on</span>
+plot(real(pos_Ncoef),imag(pos_Ncoef),<span class="string">'b*'</span>);
+hold <span class="string">off</span>
+axis <span class="string">equal</span>
+ax=gca;
+ax.YDir=<span class="string">'reverse'</span>;
+legend(<span class="string">"Origial"</span>,<span class="string">"Ncoef"</span>)
+</pre><img vspace="5" hspace="5" src="TwoDFourierVisualization_plain_01.png" alt=""> <h2 id="11">Vector display of each coefficient component</h2><pre class="codeinput">fig_movie = figure(2);
+fig_movie.Color=[0.1,0.1,0.1];
+
+Rg=plot(real(position),imag(position),<span class="string">'LineWidth'</span>,2,<span class="string">'Color'</span>,[0.3 0.3 0.3]);
+hold <span class="string">on</span>
+axis <span class="string">equal</span>
+ax=gca;
+ax.YDir=<span class="string">'reverse'</span>;
+xlim([-1000 1000])
+ylim([-1000 1000])
+ax.Color=[0.1,0.1,0.1];
+box <span class="string">off</span>
+axis <span class="string">off</span>
+
+<span class="comment">% Cumulative sum of each coefficient component is taken from the lower frequency.</span>
+pos_cumsum = cumsum(pos_NcoefMatrix,2);
+
+x0 = real(pos_cumsum(1,1:end-1)); <span class="comment">% origin x</span>
+y0 = imag(pos_cumsum(1,1:end-1)); <span class="comment">% origin y</span>
+u0 = real(pos_NcoefMatrix(1,2:end)); <span class="comment">% x elements</span>
+v0 = imag(pos_NcoefMatrix(1,2:end)); <span class="comment">% y elements</span>
+h2=quiver(x0, y0, u0, v0,<span class="keyword">...</span>
+    <span class="string">'AutoScale'</span>,<span class="string">'off'</span>,<span class="keyword">...</span>
+    <span class="string">'LineStyle'</span>,<span class="string">'-'</span>,<span class="keyword">...</span>
+    <span class="string">'LineWidth'</span>,0.5,<span class="keyword">...</span>
+    <span class="string">'Color'</span>,[0.9 0.9 0.9],<span class="keyword">...</span>
+    <span class="string">'MaxHeadSize'</span>,1);
+</pre><img vspace="5" hspace="5" src="TwoDFourierVisualization_plain_02.png" alt=""> <h2 id="12">Video display of each coefficient component</h2><pre class="codeinput">Z=plot(position(1),<span class="string">'-y'</span>,<span class="string">'LineWidth'</span>,1.5); <span class="comment">% Reference line</span>
+
+recording = false;
+
+<span class="keyword">if</span> recording
+    writerObj=VideoWriter(<span class="string">'zeta100.avi'</span>); <span class="comment">%#ok&lt;UNRCH&gt;</span>
+    open(writerObj);
+<span class="keyword">end</span>
+
+<span class="keyword">for</span> iter = 1:numel(position)-1
+    xIter = real(pos_cumsum(iter,1:end-1)); <span class="comment">% origin x</span>
+    yIter = imag(pos_cumsum(iter,1:end-1)); <span class="comment">% origin y</span>
+    uIter = real(pos_NcoefMatrix(iter,2:end)); <span class="comment">% x element</span>
+    vIter = imag(pos_NcoefMatrix(iter,2:end)); <span class="comment">% y element</span>
+
+    h2.XData = xIter;
+    h2.YData = yIter;
+    h2.UData = uIter;
+    h2.VData = vIter;
+
+    Z.XData=real(pos_Ncoef(1:iter));
+    Z.YData=imag(pos_Ncoef(1:iter));
+
+    drawnow
+    <span class="keyword">if</span> recording
+        frame=getframe(fig_movie); <span class="comment">%#ok&lt;UNRCH&gt;</span>
+        writeVideo(writerObj,frame)
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="keyword">if</span> recording
+    close(writerObj) <span class="comment">%#ok&lt;UNRCH&gt;</span>
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="TwoDFourierVisualization_plain_03.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% 2D Line Art Fourier Transform Animation
+%% Loading 2D Line Data
+
+clear; close all
+s = load('R_zeta.mat');
+% The coordinates of the curve you want to draw must be saved in .mat beforehand.
+%% 
+% The x coordinate is converted into a complex number with the real part and the y coordinate as the imaginary part.
+
+position = complex(s.R(:,1),s.R(:,2));
+Ndata = length(position); % Number of Data Point
+%% 
+% Number of Fourier Series
+
+Ncoef = 500;
+%% CFFT
+
+tmp_coef = fft(position);
+%% 
+% 
+% 
+% FFTW(<http://www.fftw.org/fftw3_doc/The-1d-Discrete-Fourier-Transform-_0028DFT_0029.html#The-1d-Discrete-Fourier-Transform-_0028DFT_0029 
+% Link>)
+% 
+% "From above, an FFTW_FORWARD transform corresponds to a sign of -1 in the 
+% exponent of the DFT. Note also that we use the standard "in-order” output ordering?the 
+% k-th output corresponds to the frequency k/n (or k/T, where T is your total 
+% sampling period). For those who like to think in terms of positive and negative 
+% frequencies, this means that the positive frequencies are stored in the first 
+% half of the output and the negative frequencies are stored in backwards order 
+% in the second half of the output. (The frequency -k/n is the same as the frequency 
+% (n-k)/n.)"
+% 
+% Number of coefficient is Ncoef: Use Ncoef/2 pairs in order of decreasing frequency (Even Ncoef)
+% 
+% |1,2,3,...,Ncoef/2|
+% 
+% |Ndata, Ndata-1, Ndata-2,..., Ndata-Ncoef/2+1|
+% 
+% 
+% First, create a vector k _ idx that represents the position of the corresponding element in order of decreasing frequency.
+
+idx1 = 1:Ncoef/2;
+idx2 = Ndata:-1:Ndata-Ncoef/2+1;
+tmp_idx = [idx1;idx2];
+%% 
+% Rearrange
+% 
+% |1, Ndata, 2, Ndata-1, 3, Ndata-3, ..., Ncoef/2, Ndata-Ncoef/2+1|
+% 
+% Only the coefficients used are assigned to Fcoef.
+
+k_idx = tmp_idx(:)';
+Fcoef = tmp_coef(k_idx);
+%% Inverse Fourier Transform and Calculation of Reproduced Coordinate Points
+%% 
+% * |pos_Nocef|: Coordinate points reproduced by N_coef coefficients (Complex number | Ndata x1 |)
+% * |pos_NcoefMatrix|: The effects of each factor are decomposed and stored (Complex | Ndata x Ncoef |)
+
+pos_Ncoef = zeros(Ndata,1);
+pos_NcoefMatrix = zeros(Ndata,Ncoef);
+
+for jj=1:Ndata
+    pos_Ncoef(jj) = (exp(1i*2*pi*(k_idx-1)*(jj-1)/Ndata)*Fcoef)/Ndata;
+    pos_NcoefMatrix(jj,:) = (exp(1i*2*pi*(k_idx-1)*(jj-1)/Ndata).*Fcoef.')/Ndata;
+end
+% pos_Ncoef = sum(pos_NcoefMatrix,2); % pos_Ncoef is same as this equation.
+%% 
+% 
+%% Draw reproduced coordinate points
+
+figure(1)
+plot(real(position),imag(position),'r');
+hold on
+plot(real(pos_Ncoef),imag(pos_Ncoef),'b*');
+hold off
+axis equal
+ax=gca;
+ax.YDir='reverse';
+legend("Origial","Ncoef")
+%% Vector display of each coefficient component
+
+fig_movie = figure(2);
+fig_movie.Color=[0.1,0.1,0.1];
+
+Rg=plot(real(position),imag(position),'LineWidth',2,'Color',[0.3 0.3 0.3]);
+hold on
+axis equal
+ax=gca;
+ax.YDir='reverse';
+xlim([-1000 1000])
+ylim([-1000 1000])
+ax.Color=[0.1,0.1,0.1];
+box off
+axis off
+
+% Cumulative sum of each coefficient component is taken from the lower frequency.
+pos_cumsum = cumsum(pos_NcoefMatrix,2);
+
+x0 = real(pos_cumsum(1,1:end-1)); % origin x
+y0 = imag(pos_cumsum(1,1:end-1)); % origin y
+u0 = real(pos_NcoefMatrix(1,2:end)); % x elements
+v0 = imag(pos_NcoefMatrix(1,2:end)); % y elements
+h2=quiver(x0, y0, u0, v0,...
+    'AutoScale','off',...
+    'LineStyle','-',...
+    'LineWidth',0.5,...
+    'Color',[0.9 0.9 0.9],...
+    'MaxHeadSize',1);
+%% Video display of each coefficient component
+
+Z=plot(position(1),'-y','LineWidth',1.5); % Reference line
+
+recording = false;
+
+if recording
+    writerObj=VideoWriter('zeta100.avi'); %#ok<UNRCH>
+    open(writerObj);
+end
+
+for iter = 1:numel(position)-1
+    xIter = real(pos_cumsum(iter,1:end-1)); % origin x
+    yIter = imag(pos_cumsum(iter,1:end-1)); % origin y
+    uIter = real(pos_NcoefMatrix(iter,2:end)); % x element
+    vIter = imag(pos_NcoefMatrix(iter,2:end)); % y element
+    
+    h2.XData = xIter;
+    h2.YData = yIter;
+    h2.UData = uIter;
+    h2.VData = vIter;
+    
+    Z.XData=real(pos_Ncoef(1:iter));
+    Z.YData=imag(pos_Ncoef(1:iter));
+    
+    drawnow
+    if recording
+        frame=getframe(fig_movie); %#ok<UNRCH>
+        writeVideo(writerObj,frame)
+    end
+end
+if recording
+    close(writerObj) %#ok<UNRCH>
+end
+%% 
+% 
+% 
+%
+##### SOURCE END #####
+--></body></html>
